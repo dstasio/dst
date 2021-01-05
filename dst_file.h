@@ -1,3 +1,5 @@
+// version 0.1
+
 #if !defined(DST_FILE_H)
 #ifdef __cplusplus
 extern "C" 
@@ -10,6 +12,7 @@ extern "C"
 #define dst_internal
 #endif
 
+// @todo: to be removed
 #include "dst_int.h"
 
 typedef struct
@@ -22,7 +25,19 @@ typedef struct
 // @todo: possibly remove windows.h?
 #include <windows.h>
 
+// *********************************************************************************
+// Declarations
+// *********************************************************************************
+
+dst_internal dst_File dst_read_entire_file(char *path);
+
+
 #ifdef DST_FILE_IMPLEMENTATION
+// *********************************************************************************
+// Implementations
+// *********************************************************************************
+
+
 // @todo: utf-8 support
 dst_internal dst_File dst_read_entire_file(char *path)
 {
@@ -58,7 +73,7 @@ dst_internal dst_File dst_read_entire_file(char *path)
 
     return result;
 }
-#endif
+#endif // DST_FILE_IMPLEMENTATION
 
 #elif defined(__linux__)
 #elif defined(__APPLE__)
