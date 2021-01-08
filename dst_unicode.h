@@ -1,4 +1,4 @@
-// version 0.1
+// version 0.1b
 
 #if !defined(DST_UNICODE_H)
 #ifdef __cplusplus
@@ -32,14 +32,18 @@ typedef struct
 } dstutf_String;
 
 // @doc: string is assumed to be null-terminated
-dstutf_internal dstutf_String  dstutf_make_string(char *data);
-
+dstutf_internal dstutf_String       dstutf_make_string(char *data);
 // @doc: size pointer returns string size in bytes, can be null.
-dstutf_internal dstu64         dstutf_length(dstu8 *data, dstu64 *out_size);
-
+dstutf_internal dstu64              dstutf_length(dstu8 *data, dstu64 *out_size);
 // @doc: returns index of the first appearance of 'token' in 'str', or DSTUTF_NOT_FOUND
-dstutf_internal dstu64         dstutf_find(dstutf_String str, dstutf_String token);
+dstutf_internal dstu64              dstutf_find(dstutf_String str, dstutf_String token, dstu64 start_index);
+// @doc: reads codepoint and advances pointer to the next position
+dstutf_internal dstutf_Codepoint    dstutf__eat_codepoint(dstu8 **s);
 
+// @doc: the following decode, respectively, the utf8/utf16 character pointed to by the input pointer;
+//       the length in bytes of the encoded character is returned by 'out_length_in_bytes' if not null
+dstutf_internal dstu32 dstutf_decode_utf8 (dstu8 *utf, dstu32 *out_length_in_bytes);
+dstutf_internal dstu32 dstutf_decode_utf16(dstu8 *utf, dstu32 *out_length_in_bytes);
 
 dstu8 dstutf8__char_length_table[16] = 
 {
@@ -91,50 +95,68 @@ dstutf_length(dstu8 *data, dstu64 *out_size = 0)
     return length;
 }
 
-// @doc: reads codepoint and advances pointer to the next position
-dstutf_internal dstutf_Codepoint
-dstutf__eat_codepoint(dstu8 **s)
+dstutf_internal dstu32
+dstutf_decode_utf8(dstu8 *utf, dstu32 *out_length_in_bytes = 0)
 {
     dstutf_Codepoint result = 0;
-    dstu8 char_size = dstutf8__char_length_table[(**s) >> 4];
+
+    dstu8 char_size = dstutf8__char_length_table[(*utf) >> 4];
+    if (out_length_in_bytes)
+        *out_length_in_bytes = char_size;
 
     // @todo: look at disassembly
     dstu8 bitmask_length = 8 - (char_size + !!(char_size-1));
     dstu8 bitmask = ~(0xFF << bitmask_length);
 
-    result = **s & bitmask;
+    result = *utf & bitmask;
 
     bitmask = 0b111111;
-    char_size -= 1;  *s += 1;
+    char_size -= 1;  utf += 1;
     while (char_size > 0)
     {
         result <<= 6;
-        result |= **s & bitmask;
+        result |= *utf & bitmask;
 
-        char_size -= 1;  *s += 1;
+        char_size -= 1;  utf += 1;
     }
+    return result;
+}
+
+dstutf_internal dstu32
+dstutf_decode_utf16(dstu8 *utf, dstu32 *out_length_in_bytes = 0)
+{
+}
+
+dstutf_internal dstutf_Codepoint
+dstutf__eat_codepoint(dstu8 **s)
+{
+    dstutf_Codepoint result = 0;
+
+    dstu32 char_size = 0;
+    dstutf_decode_utf8(*s, &char_size);
+    s += char_size;
 
     return result;
 }
 
 dstutf_internal dstu64
-dstutf_find(dstutf_String str, dstutf_String token)
+dstutf_find(dstutf_String str, dstutf_String token, dstu64 start_index = 0)
 {
-    dstu8 *source_at = str.bytes;
+    dstu64 index = start_index;
+    dstu8 *source_at = str.bytes + index;
     dstu8 *token_at = token.bytes;
     dstu8 *token_end = token.bytes + token.buffer_size;
     dstutf_Codepoint token_codepoint = dstutf__eat_codepoint(&token_at);
 
-    dstu8 read = 0;
     dstu64 match_index = DSTUTF_NOT_FOUND;
-    while (read < str.length)
+    while (index < str.length)
     {
         dstutf_Codepoint str_codepoint = dstutf__eat_codepoint(&source_at);
 
         if (str_codepoint == token_codepoint)
         {
             if (match_index == DSTUTF_NOT_FOUND)
-                match_index = read;
+                match_index = index;
 
             if (token_at == token_end)
                 break;
@@ -146,7 +168,7 @@ dstutf_find(dstutf_String str, dstutf_String token)
             token_codepoint = dstutf__eat_codepoint(&token_at);
         }
 
-        read += 1;
+        index += 1;
     }
 
     return match_index;
