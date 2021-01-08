@@ -41,9 +41,9 @@ dstutf_internal dstu64              dstutf_find(dstutf_String str, dstutf_String
 dstutf_internal dstutf_Codepoint    dstutf__eat_codepoint(dstu8 **s);
 
 // @doc: the following decode, respectively, the utf8/utf16 character pointed to by the input pointer;
-//       the length in bytes of the encoded character is returned by 'out_length_in_bytes' if not null
-dstutf_internal dstu32 dstutf_decode_utf8 (dstu8 *utf, dstu32 *out_length_in_bytes);
-dstutf_internal dstu32 dstutf_decode_utf16(dstu8 *utf, dstu32 *out_length_in_bytes);
+//       the number of 'units' of the encoded character is returned by 'out_char_len' if not null
+dstutf_internal dstu32 dstutf_decode_utf8 (dstu8  *utf, dstu32 *out_char_len);
+dstutf_internal dstu32 dstutf_decode_utf16(dstu16 *utf, dstu32 *out_char_len);
 
 dstu8 dstutf8__char_length_table[16] = 
 {
@@ -96,13 +96,13 @@ dstutf_length(dstu8 *data, dstu64 *out_size = 0)
 }
 
 dstutf_internal dstu32
-dstutf_decode_utf8(dstu8 *utf, dstu32 *out_length_in_bytes = 0)
+dstutf_decode_utf8(dstu8 *utf, dstu32 *out_char_len = 0)
 {
     dstutf_Codepoint result = 0;
 
     dstu8 char_size = dstutf8__char_length_table[(*utf) >> 4];
-    if (out_length_in_bytes)
-        *out_length_in_bytes = char_size;
+    if (out_char_len)
+        *out_char_len = char_size;
 
     // @todo: look at disassembly
     dstu8 bitmask_length = 8 - (char_size + !!(char_size-1));
@@ -122,9 +122,30 @@ dstutf_decode_utf8(dstu8 *utf, dstu32 *out_length_in_bytes = 0)
     return result;
 }
 
+// @todo: @important: manage different endianness
 dstutf_internal dstu32
-dstutf_decode_utf16(dstu8 *utf, dstu32 *out_length_in_bytes = 0)
+dstutf_decode_utf16(dstu16 *utf, dstu32 *out_char_len = 0)
 {
+    dstutf_Codepoint result = 0;
+
+    // @todo: error reporting; assert that the character has values in ranges: U+0000-U+D7FF or U+E000-U+FFFF
+    dstu32 char_size = (*utf > 0x10000) ? 2 : 1;
+    if (out_char_len)
+        *out_char_len = char_size;
+
+    if (char_size == 1)
+    {
+        result = *utf;
+    }
+    else
+    {
+        result = 0x10000;
+        result += (*utf - 0xD800) * 0x400;
+        utf += 1;
+        result += *utf - 0xDC00;
+    }
+
+    return result;
 }
 
 dstutf_internal dstutf_Codepoint
