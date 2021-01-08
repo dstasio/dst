@@ -12,8 +12,16 @@ extern "C"
 #define dst_internal
 #endif
 
-// @todo: to be removed
-#include "dst_int.h"
+#include <stdint.h>
+typedef uint8_t  dstu8;
+typedef uint16_t dstu16;
+typedef uint32_t dstu32;
+typedef uint64_t dstu64;
+typedef int8_t  dsts8;
+typedef int16_t dsts16;
+typedef int32_t dsts32;
+typedef int64_t dsts64;
+
 
 typedef struct
 {
