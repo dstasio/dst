@@ -8,7 +8,7 @@ extern "C"
 
 #define DSTUTF_NOT_FOUND 0xFFFFFFFFFFFFFFFF
 
-#ifdef DST_FILE_STATIC
+#ifdef DST_UNICODE_STATIC
 #define dstutf_internal static
 #else
 #define dstutf_internal
@@ -60,7 +60,7 @@ dstu8 dstutf8__char_length_table[16] =
     2, 2, 3, 4,
 };
 
-#ifdef DST_FILE_IMPLEMENTATION
+#ifdef DST_UNICODE_IMPLEMENTATION
 // *********************************************************************************
 // Implementations
 // *********************************************************************************
@@ -202,7 +202,7 @@ dstutf_find(dstutf_String str, dstutf_String token, dstu64 start_index)
     return match_index;
 }
 
-#endif // DST_FILE_IMPLEMENTATION
+#endif // DST_UNICODE_IMPLEMENTATION
 
 #ifdef __cplusplus
 }
