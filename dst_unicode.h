@@ -39,6 +39,7 @@ typedef struct
 } dstutf_String;
 
 // @doc: string is assumed to be null-terminated
+//       this does not allocate any memory, but just interprets given data as a unicode string
 dstutf_internal dstutf_String       dstutf_make_string(char *data);
 // @doc: size pointer returns string size in bytes, can be null.
 dstutf_internal dstu64              dstutf_length(dstu8 *data, dstu64 *out_size = 0);
