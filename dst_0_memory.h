@@ -11,23 +11,15 @@ extern "C"
 #endif
 
 #include <stdint.h>
-typedef uint8_t  dstu8;
-typedef uint16_t dstu16;
-typedef uint32_t dstu32;
-typedef uint64_t dstu64;
-typedef int8_t  dsts8;
-typedef int16_t dsts16;
-typedef int32_t dsts32;
-typedef int64_t dsts64;
-
 
 // =====================================================================================
 // Declarations
 // =====================================================================================
-dstmem_internal void *dst_malloc(dstu64 size);
+dstmem_internal void *dst_malloc(uint64_t size);
 dstmem_internal void  dst_free(void *memory);
 
 
+#ifdef DST_MEMORY_IMPLEMENTATION
 // =====================================================================================
 // Implementations
 // =====================================================================================
@@ -35,7 +27,7 @@ dstmem_internal void  dst_free(void *memory);
 // @todo: possibly remove windows.h?
 #include <windows.h>
 
-dstmem_internal void *dst_malloc(dstu64 size)
+dstmem_internal void *dst_malloc(uint64_t size)
 {
     void *memory = VirtualAlloc(0, size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
@@ -55,7 +47,9 @@ dstmem_internal void dst_free(void *memory)
 TEST_LINUX;
 #elif defined(__APPLE__)
 TEST_MACOS;
-#endif
+#endif // _WIN32/__linux__/__APPLE__
+
+#endif // DST_MEMORY_IMPLEMENTATION
 
 #ifdef __cplusplus
 }
