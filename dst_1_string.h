@@ -6,9 +6,9 @@ extern "C"
 #endif
 
 #ifdef DST_STRING_STATIC
-#define dstr_internal static
+#define dstr_func static
 #else
-#define dstr_internal
+#define dstr_func
 #endif
 
 #include <stdint.h>
@@ -40,24 +40,28 @@ typedef struct
 //       - content_size: size in bytes of 'content'
 //       - format:       format used to decode 'content';
 //                       can be: DSTR_ASCII, DSTR_UTF8   [default: ASCII]
-dstr_internal void dstr_to_string(dstr_String *out_string, void *content, uint64_t content_size, dstr_Format format = DSTR_ASCII);
+dstr_func void dstr_to_string(dstr_String *out_string, void *content, uint64_t content_size, dstr_Format format = DSTR_ASCII);
 
-//dstr_internal void dstr_make_empty_string(dstr_String *out_string, uint64_t length, dstr_Format format = DSTR_ASCII);
+//dstr_func void dstr_make_empty_string(dstr_String *out_string, uint64_t length, dstr_Format format = DSTR_ASCII);
 
-dstr_internal int dstr_is_numeric(uint32_t chr);
 
-dstr_internal uint32_t dstr32_parse_uint(uint32_t *str, uint32_t *out_n_chars_parsed = 0);
-dstr_internal uint32_t  dstr8_parse_uint(char     *str, uint32_t *out_n_chars_parsed = 0);
-dstr_internal int32_t  dstr32_parse_int (uint32_t *str, uint32_t *out_n_chars_parsed = 0);
-dstr_internal int32_t   dstr8_parse_int (char     *str, uint32_t *out_n_chars_parsed = 0);
+dstr_func int dstr_is_numeric(uint32_t chr);
 
+
+dstr_func uint32_t dstr32_parse_uint(uint32_t *str, uint32_t *out_n_chars_parsed = 0);
+dstr_func uint32_t  dstr8_parse_uint(char     *str, uint32_t *out_n_chars_parsed = 0);
+
+dstr_func int32_t  dstr32_parse_int (uint32_t *str, uint32_t *out_n_chars_parsed = 0);
+dstr_func int32_t   dstr8_parse_int (char     *str, uint32_t *out_n_chars_parsed = 0);
+
+dstr_func float dstr8_parse_float(char *str, uint32_t *out_n_chars_parsed = 0);
 
 #ifdef DST_STRING_IMPLEMENTATION
 // =====================================================================================
 // Implementations
 // =====================================================================================
 
-dstr_internal void dstr_to_string(dstr_String *out_string,
+dstr_func void dstr_to_string(dstr_String *out_string,
                                   void        *content,
                                   uint64_t     content_size,
                                   dstr_Format  format)
@@ -75,7 +79,7 @@ dstr_internal void dstr_to_string(dstr_String *out_string,
 }
 
 
-dstr_internal int dstr_is_numeric(uint32_t chr)
+dstr_func int dstr_is_numeric(uint32_t chr)
 {
     int result = 0;
     if ((chr >= (uint32_t)'0') && (chr <= (uint32_t)'9'))
@@ -83,7 +87,7 @@ dstr_internal int dstr_is_numeric(uint32_t chr)
     return result;
 }
 
-dstr_internal uint32_t dstr8_parse_uint(char     *str,
+dstr_func uint32_t dstr8_parse_uint(char     *str,
                                         uint32_t *out_n_chars_parsed)
 {
     uint32_t result       = 0;
@@ -103,8 +107,8 @@ dstr_internal uint32_t dstr8_parse_uint(char     *str,
     return result;
 }
 
-dstr_internal int32_t dstr8_parse_int(char     *str,
-                                      uint32_t *out_n_chars_parsed)
+dstr_func int32_t dstr8_parse_int(char     *str,
+                                  uint32_t *out_n_chars_parsed)
 {
     int32_t result = 1;
     // @todo: algorithm
@@ -117,6 +121,52 @@ dstr_internal int32_t dstr8_parse_int(char     *str,
         str += 1;
     // @note: parse_uint returns 0 if no numeric character was found
     result *= dstr8_parse_uint(str, out_n_chars_parsed);
+    return result;
+}
+
+dstr_func float dstr8_parse_float(char     *str,
+                                  uint32_t *out_n_chars_parsed)
+{
+    uint32_t chars_parsed = 0;
+
+    float result   = 0.f;
+    float sign     = 1.f;
+    float fraction = 0.f;
+
+    // @todo: algorithm
+    if (*str == '-')
+    {
+        sign = -1.f;
+        str += 1;
+    }
+    else if (*str == '+')
+        str += 1;
+
+    while(dstr_is_numeric((uint32_t)*str) ||
+          *str == '.')
+    {
+        if (*str == '.')
+        {
+            // @todo: error reporting
+            if(fraction)
+                break;
+            fraction = 1.f;
+        }
+        else
+        {
+            result *= 10;
+            result += *str - '0';
+            if (fraction)
+                fraction *= 10.f;
+        }
+        chars_parsed += 1;
+        str += 1;
+    }
+
+    if (fraction)
+        result /= sign*fraction;
+    if (out_n_chars_parsed)
+        *out_n_chars_parsed = chars_parsed;
     return result;
 }
 
