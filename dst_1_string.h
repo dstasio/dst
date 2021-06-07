@@ -163,8 +163,9 @@ dstr_func float dstr8_parse_float(char     *str,
         str += 1;
     }
 
+    result /= sign;
     if (fraction)
-        result /= sign*fraction;
+        result /= fraction;
     if (out_n_chars_parsed)
         *out_n_chars_parsed = chars_parsed;
     return result;
